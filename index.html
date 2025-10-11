@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Examination Portal</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Soft blue-gray background */
+        }
+        /* Style for disabled button */
+        .disabled-btn {
+            background-color: #94a3b8; /* A muted gray */
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .enabled-btn {
+            background-color: #2563eb; /* A vibrant blue */
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .enabled-btn:hover {
+            background-color: #1d4ed8; /* A darker blue on hover */
+            transform: translateY(-2px);
+        }
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+        }
+        h1, h2 {
+            font-weight: 700;
+        }
+        ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
+
+    <div class="w-full max-w-4xl mx-auto">
+        <div class="card">
+            <!-- Header Section with Clock and Timer -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Online Examination Portal</h1>
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg inline-block">
+                    <p class="text-lg text-gray-700"><strong>Current Time:</strong> <span id="live-clock"></span></p>
+                    <p id="countdown-timer" class="text-lg font-semibold text-red-600 mt-2"></p>
+                </div>
+            </div>
+
+            <!-- Instructions Section -->
+            <div class="instructions text-gray-700 space-y-6">
+                <h2 class="text-2xl font-semibold border-b-2 border-gray-200 pb-2">Online Examination Instructions</h2>
+                
+                <div id="general-guidelines">
+                    <h3 class="text-xl font-semibold mb-2 text-gray-800">General Guidelines</h3>
+                    <ul class="space-y-2">
+                        <li>Ensure you have a stable internet connection throughout the exam.</li>
+                        <li>Find a quiet and well-lit space to take the test without distractions.</li>
+                        <li>Keep your device fully charged or connected to a power source.</li>
+                        <li>Read all instructions carefully before starting the exam.</li>
+                    </ul>
+                </div>
+                
+                <div id="timing-rules">
+                    <h3 class="text-xl font-semibold mb-2 text-gray-800">Timing Rules</h3>
+                    <ul class="space-y-2">
+                        <li>The exam has a fixed duration. The timer will start as soon as you click "Start Test".</li>
+                        <li>The "Start Test" button will only be active during the specified exam window.</li>
+                        <li>Your test will be automatically submitted when the time expires.</li>
+                    </ul>
+                </div>
+
+                <div id="before-you-begin">
+                    <h3 class="text-xl font-semibold mb-2 text-gray-800">Before You Begin</h3>
+                    <ul class="space-y-2">
+                        <li>Close all other applications, tabs, and windows on your computer.</li>
+                        <li>Have a piece of scratch paper and a pen/pencil ready if allowed.</li>
+                        <li>Use a recommended browser (e.g., latest version of Chrome or Firefox).</li>
+                    </ul>
+                </div>
+                
+                <div id="prohibited-actions">
+                    <h3 class="text-xl font-semibold mb-2 text-gray-800">Prohibited Actions</h3>
+                    <ul class="space-y-2 text-red-700">
+                        <li>Do not use any external resources like books, notes, or websites unless permitted.</li>
+                        <li>Do not communicate with any other person during the exam.</li>
+                        <li>Do not attempt to copy, print, or capture screenshots of the exam questions.</li>
+                        <li>Do not refresh the page or use the browser's back/forward buttons.</li>
+                    </ul>
+                </div>
+
+                 <div id="important-notes">
+                    <h3 class="text-xl font-semibold mb-2 text-gray-800">Important Notes</h3>
+                    <p>Violation of any of the rules may lead to disqualification. In case of any technical issues, contact the administrator immediately.</p>
+                </div>
+            </div>
+            
+            <!-- Start Test Button -->
+            <div class="mt-10 text-center">
+                <button id="start-test-btn" class="text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    Start Test
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- ADMIN CONFIGURATION ---
+            // The admin can set the exam start and end times here.
+            // Format: "YYYY-MM-DDTHH:MM:SS" (uses the user's local timezone)
+            const examStartTimeStr = "2025-10-11T10:00:00";
+            const examEndTimeStr = "2025-10-11T11:00:00";
+            const examLink = "https://vidhyasaraswathy1-bit.github.io/onlineexam/";
+            // --- END OF ADMIN CONFIGURATION ---
+
+            const examStartTime = new Date(examStartTimeStr);
+            const examEndTime = new Date(examEndTimeStr);
+
+            const startTestBtn = document.getElementById('start-test-btn');
+            const liveClockEl = document.getElementById('live-clock');
+            const countdownTimerEl = document.getElementById('countdown-timer');
+
+            // Function to format time for the countdown
+            function formatCountdown(ms) {
+                if (ms < 0) ms = 0;
+                let totalSeconds = Math.floor(ms / 1000);
+                let days = Math.floor(totalSeconds / 86400);
+                totalSeconds %= 86400;
+                let hours = Math.floor(totalSeconds / 3600);
+                totalSeconds %= 3600;
+                let minutes = Math.floor(totalSeconds / 60);
+                let seconds = totalSeconds % 60;
+                
+                return `${days > 0 ? days + 'd ' : ''}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+
+            // This function updates the clock, countdown, and button state every second.
+            function updateExamStatus() {
+                const currentTime = new Date();
+
+                // Update live clock
+                liveClockEl.textContent = currentTime.toLocaleTimeString();
+
+                // Check exam status
+                if (currentTime < examStartTime) {
+                    // --- Before the exam ---
+                    startTestBtn.disabled = true;
+                    startTestBtn.classList.remove('enabled-btn');
+                    startTestBtn.classList.add('disabled-btn');
+                    const timeUntilStart = examStartTime - currentTime;
+                    countdownTimerEl.textContent = `Test starts in: ${formatCountdown(timeUntilStart)}`;
+                    countdownTimerEl.className = 'text-lg font-semibold text-blue-600 mt-2';
+                } else if (currentTime >= examStartTime && currentTime < examEndTime) {
+                    // --- During the exam ---
+                    startTestBtn.disabled = false;
+                    startTestBtn.classList.remove('disabled-btn');
+                    startTestBtn.classList.add('enabled-btn');
+                    const timeUntilEnd = examEndTime - currentTime;
+                    countdownTimerEl.textContent = `Test ends in: ${formatCountdown(timeUntilEnd)}`;
+                    countdownTimerEl.className = 'text-lg font-semibold text-red-600 mt-2';
+                } else {
+                    // --- After the exam ---
+                    startTestBtn.disabled = true;
+                    startTestBtn.classList.remove('enabled-btn');
+                    startTestBtn.classList.add('disabled-btn');
+                    countdownTimerEl.textContent = "The exam window has closed.";
+                    countdownTimerEl.className = 'text-lg font-semibold text-gray-500 mt-2';
+                }
+            }
+
+            // Add click listener for the start button
+            startTestBtn.addEventListener('click', () => {
+                if (!startTestBtn.disabled) {
+                    window.location.href = examLink;
+                }
+            });
+
+            // Run the update function immediately on page load
+            updateExamStatus();
+            // Then, run it every second
+            setInterval(updateExamStatus, 1000);
+        });
+    </script>
+</body>
+</html>
